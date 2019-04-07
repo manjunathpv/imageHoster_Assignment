@@ -1,8 +1,10 @@
 package ImageHoster.controller;
 
+import ImageHoster.model.Comment;
 import ImageHoster.model.Image;
 import ImageHoster.model.Tag;
 import ImageHoster.model.User;
+import ImageHoster.service.CommentService;
 import ImageHoster.service.ImageService;
 import ImageHoster.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class ImageController {
 
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private CommentService commentService;
 
     private String notPermitted = "";
 
@@ -64,6 +69,8 @@ public class ImageController {
         }
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+        List<Comment> commentList = commentService.getAllComments(image.getId(), image.getTitle());
+        model.addAttribute("comments", commentList);
         return "images/image";
     }
 
@@ -134,7 +141,8 @@ public class ImageController {
     //The method also receives tags parameter which is a string of all the tags separated by a comma using the annotation @RequestParam
     //The method converts the string to a list of all the tags using findOrCreateTags() method and sets the tags attribute of an image as a list of all the tags
     @RequestMapping(value = "/editImage", method = RequestMethod.PUT)
-    public String editImageSubmit(@RequestParam("file") MultipartFile file, @RequestParam("imageId") Integer imageId, @RequestParam("tags") String tags, Image updatedImage, HttpSession session) throws IOException {
+    public String editImageSubmit(@RequestParam("file") MultipartFile file, @RequestParam("imageId") Integer
+            imageId, @RequestParam("tags") String tags, Image updatedImage, HttpSession session) throws IOException {
 
         Image image = imageService.getImage(imageId);
         String updatedImageData = convertUploadedFileToBase64(file);
@@ -177,6 +185,14 @@ public class ImageController {
         }
     }
 
+    //@RequestMapping(value = "/image/{image.id}/{image.title}/comments", method = RequestMethod.POST)
+    //public String postComment(Comment comment, HttpSession session) throws IOException {
+
+    // User user = (User) session.getAttribute("loggeduser");
+    // comment.setUser(user);
+    // imageService.uploadImage(newImage);
+    // return "redirect://image/{image.id}/{image.title}";
+    // }
 
     //This method converts the image to Base64 format
     private String convertUploadedFileToBase64(MultipartFile file) throws IOException {

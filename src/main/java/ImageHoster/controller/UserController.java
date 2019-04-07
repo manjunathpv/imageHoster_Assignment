@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.regex.*;
 
 
 @Controller
@@ -24,6 +25,10 @@ public class UserController {
     @Autowired
     private ImageService imageService;
 
+    private Pattern p = Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{3,}$");
+
+    private String passwordValidated = "";
+
     //This controller method is called when the request pattern is of type 'users/registration'
     //This method declares User type and UserProfile type object
     //Sets the user profile with UserProfile type object
@@ -31,23 +36,39 @@ public class UserController {
     @RequestMapping("users/registration")
     public String registration(Model model) {
         User user = new User();
+        String error;
         UserProfile profile = new UserProfile();
         user.setProfile(profile);
         model.addAttribute("User", user);
+        if (passwordValidated != "") {
+            error = "Password must contain atleast 1 alphabet, 1 number & 1 special character";
+            if (passwordValidated.equalsIgnoreCase("No")) {
+                model.addAttribute("passwordTypeError", error);
+            }
+            passwordValidated = "";
+        }
         return "users/registration";
     }
 
     //This controller method is called when the request pattern is of type 'users/registration' and also the incoming request is of POST type
     //This method calls the business logic and after the user record is persisted in the database, directs to login page
     @RequestMapping(value = "users/registration", method = RequestMethod.POST)
-    public String registerUser(User user) {
-        userService.registerUser(user);
-        return "redirect:/users/login";
+    public String registerUser(User user, Model model) {
+        Matcher m = p.matcher(user.getPassword());
+        if (m.matches()) {
+            passwordValidated = "Yes";
+            userService.registerUser(user);
+            return "redirect:/users/login";
+        } else {
+            passwordValidated = "No";
+            return "redirect:/users/registration";
+        }
+
     }
 
     //This controller method is called when the request pattern is of type 'users/login'
     @RequestMapping("users/login")
-    public String login() {
+    public String login(Model model) {
         return "users/login";
     }
 
